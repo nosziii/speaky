@@ -24,3 +24,13 @@ A mikrofonos diktálás Chrome és Edge alatt működik a legjobban. Éles, inte
 - Frontend build: `npm run build`
 - Backend teszt: a `backend` mappában `pytest`
 - API állapot: `/api/health`
+
+## Android alkalmazás
+
+Az Android-változat Capacitorra épül, és ugyanahhoz a Python/PostgreSQL szerverhez kapcsolódik.
+
+- Android-emulátor és a helyi Docker-szerver: `npm run android:sync`
+- Saját szerver használata PowerShellben: `$env:CAPACITOR_SERVER_URL='https://sajat-domain.hu'; npm run android:sync`
+- Projekt megnyitása Android Studióban: `npm run android:open`
+
+Az alapértelmezett `http://10.0.2.2:8080` cím az Android-emulátorból a fejlesztői számítógépet éri el. Valódi telefonos és kiadási buildhez HTTPS-es publikus szervercímet kell megadni. Az Android Studio és az Android SDK telepítése szükséges az APK/AAB elkészítéséhez.

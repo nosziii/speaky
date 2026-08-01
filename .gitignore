@@ -36,6 +36,12 @@ backend/test-speaky.db
 backend/**/__pycache__/
 backend/.pytest_cache/
 .venv/
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+*.jks
+*.keystore
 
 # vercel
 .vercel

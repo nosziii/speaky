@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Itt vagyok</string>
+    <string name="title_activity_main">Itt vagyok</string>
+    <string name="package_name">hu.nosziii.speaky</string>
+    <string name="custom_url_scheme">hu.nosziii.speaky</string>
+</resources>
