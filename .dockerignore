@@ -1,0 +1,8 @@
+.git
+node_modules
+.vinext
+.wrangler
+.dev-server*
+backend/.pytest_cache
+backend/**/__pycache__
+.env
