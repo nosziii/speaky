@@ -7,7 +7,7 @@ Privát, valós idejű családi beszélgetőalkalmazás beszédfelismeréssel é
 1. Másold le a `.env.example` fájlt `.env` néven.
 2. Cseréld le a két jelszót és a `SESSION_SECRET` értékét.
 3. Indítsd el: `docker compose up --build`
-4. Nyisd meg: `http://localhost:8080`
+4. Nyisd meg: `http://localhost:9004`
 
 A két előre beállított fiók az apa és a gyermek. Regisztráció szándékosan nincs. Az üzenetek PostgreSQL-ben, a Docker `postgres-data` kötetében maradnak meg.
 
@@ -31,13 +31,13 @@ A mikrofonos diktálás Chrome és Edge alatt működik a legjobban. Éles, inte
 
 ## Tesztszerver: speaky.kalandjatek.eu
 
-A konténerek előtt a szerveren futó HTTPS reverse proxy szolgálja ki a domaint. A `.env` fájlban állítsd a `SPEAKY_BIND_ADDRESS` értékét `127.0.0.1`-re, így a Docker gateway csak a szerveren belül érhető el. A reverse proxy továbbítsa a `https://speaky.kalandjatek.eu` forgalmát a `http://127.0.0.1:8080` címre, WebSocket támogatással.
+A konténerek előtt a szerveren futó HTTPS reverse proxy szolgálja ki a domaint. A `.env` fájlban állítsd a `SPEAKY_BIND_ADDRESS` értékét `127.0.0.1`-re, így a Docker gateway csak a szerveren belül érhető el. A reverse proxy továbbítsa a `https://speaky.kalandjatek.eu` forgalmát a `http://127.0.0.1:9004` címre, WebSocket támogatással.
 
 Példa Caddy konfiguráció:
 
 ```caddyfile
 speaky.kalandjatek.eu {
-  reverse_proxy 127.0.0.1:8080
+  reverse_proxy 127.0.0.1:9004
 }
 ```
 
@@ -66,4 +66,4 @@ Az Android-változat Capacitorra épül, és ugyanahhoz a Python/PostgreSQL szer
 - Saját szerver használata PowerShellben: `$env:CAPACITOR_SERVER_URL='https://sajat-domain.hu'; npm run android:sync`
 - Projekt megnyitása Android Studióban: `npm run android:open`
 
-Az alapértelmezett `http://10.0.2.2:8080` cím az Android-emulátorból a fejlesztői számítógépet éri el. Valódi telefonos és kiadási buildhez HTTPS-es publikus szervercímet kell megadni. Az Android Studio és az Android SDK telepítése szükséges az APK/AAB elkészítéséhez.
+Az alapértelmezett `http://10.0.2.2:9004` cím az Android-emulátorból a fejlesztői számítógépet éri el. Valódi telefonos és kiadási buildhez HTTPS-es publikus szervercímet kell megadni. Az Android Studio és az Android SDK telepítése szükséges az APK/AAB elkészítéséhez.

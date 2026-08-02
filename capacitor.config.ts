@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-const serverUrl = process.env.CAPACITOR_SERVER_URL ?? "http://10.0.2.2:8080";
+const serverUrl = process.env.CAPACITOR_SERVER_URL ?? "http://10.0.2.2:9004";
 
 const config: CapacitorConfig = {
   appId: "hu.nosziii.speaky",
