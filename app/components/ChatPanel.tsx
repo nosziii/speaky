@@ -8,7 +8,7 @@ type SpeechEvent = { resultIndex: number; results: ArrayLike<SpeechResult> };
 type SpeechRecognitionLike = { lang: string; interimResults: boolean; continuous: boolean; start(): void; stop(): void; onresult: ((e: SpeechEvent) => void) | null; onend: (() => void) | null; onerror: (() => void) | null };
 type SpeechConstructor = new () => SpeechRecognitionLike;
 
-export function ChatPanel({ user, messages, online, send, sendSignal, signalFrom }: { user: User; messages: Message[]; online: boolean; send: (text: string, kind: "text" | "speech") => boolean; sendSignal: () => boolean; signalFrom: string | null }) {
+export function ChatPanel({ user, conversationTitle, messages, online, send, sendSignal, signalFrom }: { user: User; conversationTitle: string; messages: Message[]; online: boolean; send: (text: string, kind: "text" | "speech") => boolean; sendSignal: () => boolean; signalFrom: string | null }) {
   const [draft, setDraft] = useState("");
   const [listening, setListening] = useState(false);
   const [liveWords, setLiveWords] = useState("");
@@ -42,7 +42,7 @@ export function ChatPanel({ user, messages, online, send, sendSignal, signalFrom
   return (
     <section className="chat-panel">
       {signalFrom && <div className="signal-toast" role="status"><span>♪</span><strong>{signalFrom} gondol rád!</strong></div>}
-      <div className="chat-heading"><div><p className="eyebrow">KETTŐTÖK BESZÉLGETÉSE</p><h1>Szia, {user.name}! <span aria-hidden="true">👋</span></h1></div><span className={`connection ${online ? "online" : ""}`}>{online ? "kapcsolódva" : "kapcsolódás…"}</span></div>
+      <div className="chat-heading"><div><p className="eyebrow">{conversationTitle}</p><h1>Szia, {user.name}! <span aria-hidden="true">👋</span></h1></div><span className={`connection ${online ? "online" : ""}`}>{online ? "kapcsolódva" : "kapcsolódás…"}</span></div>
       <div className="messages" aria-live="polite">
         {messages.length === 0 && <div className="empty-chat"><span>☀</span><h2>Még csend van itt.</h2><p>Nyomd meg a nagy gombot, és mondd el, mi jár a fejedben!</p></div>}
         {messages.map((message) => {

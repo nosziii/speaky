@@ -3,21 +3,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Message, User } from "./types";
 
-export function useFamilySocket(user: User | null) {
+export function useFamilySocket(user: User | null, conversationId: string | null) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [online, setOnline] = useState(false);
   const [signalFrom, setSignalFrom] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !conversationId) return;
     let retry: ReturnType<typeof setTimeout>;
     let active = true;
     const connect = () => {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-      const socket = new WebSocket(`${protocol}//${location.host}/ws/chat`);
+      const socket = new WebSocket(`${protocol}//${location.host}/ws/chat/${conversationId}`);
       socketRef.current = socket;
-      socket.onopen = () => setOnline(true);
+      socket.onopen = () => { setMessages([]); setOnline(true); };
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "history") setMessages(data.messages);
@@ -32,7 +32,7 @@ export function useFamilySocket(user: User | null) {
     };
     connect();
     return () => { active = false; clearTimeout(retry); socketRef.current?.close(); };
-  }, [user]);
+  }, [user, conversationId]);
 
   const send = useCallback((text: string, kind: "text" | "speech") => {
     if (socketRef.current?.readyState !== WebSocket.OPEN || !text.trim()) return false;

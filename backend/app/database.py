@@ -24,6 +24,32 @@ MESSAGES_SCHEMA = """CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 )"""
 
+FAMILY_SCHEMAS = [
+    """CREATE TABLE IF NOT EXISTS households (
+      id TEXT PRIMARY KEY, name TEXT NOT NULL,
+      allow_child_chat BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )""",
+    """CREATE TABLE IF NOT EXISTS household_members (
+      household_id TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (household_id, user_id)
+    )""",
+    """CREATE TABLE IF NOT EXISTS conversations (
+      id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK (kind IN ('family', 'direct')),
+      household_id TEXT REFERENCES households(id) ON DELETE CASCADE,
+      title TEXT, created_by TEXT NOT NULL REFERENCES users(id),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )""",
+    """CREATE TABLE IF NOT EXISTS conversation_members (
+      conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (conversation_id, user_id)
+    )""",
+]
+
 def connection():
     return connect(settings.database_url, row_factory=dict_row)
 
@@ -33,6 +59,8 @@ def initialize(attempts: int = 20) -> None:
             with connection() as db:
                 db.execute(USERS_SCHEMA)
                 db.execute(MESSAGES_SCHEMA)
+                for schema in FAMILY_SCHEMAS: db.execute(schema)
+                db.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_id TEXT")
                 db.execute("CREATE INDEX IF NOT EXISTS messages_created_at_idx ON messages (created_at DESC)")
                 db.execute(
                     "INSERT INTO users(id, username, name, role, password_hash) VALUES(%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
@@ -42,6 +70,12 @@ def initialize(attempts: int = 20) -> None:
                     "INSERT INTO users(id, username, name, role, password_hash) VALUES(%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
                     ("child", settings.child_username.lower(), "Manó", "child", hash_password(settings.child_password)),
                 )
+                db.execute("INSERT INTO households(id,name) VALUES('family-default','A mi családunk') ON CONFLICT DO NOTHING")
+                db.execute("INSERT INTO household_members(household_id,user_id,is_admin) VALUES('family-default','parent',TRUE),('family-default','child',FALSE) ON CONFLICT DO NOTHING")
+                db.execute("INSERT INTO conversations(id,kind,household_id,title,created_by) VALUES('family-default','family','family-default','A mi családunk','parent') ON CONFLICT DO NOTHING")
+                db.execute("INSERT INTO conversation_members(conversation_id,user_id) SELECT 'family-default',user_id FROM household_members WHERE household_id='family-default' ON CONFLICT DO NOTHING")
+                db.execute("UPDATE messages SET conversation_id='family-default' WHERE conversation_id IS NULL")
+                db.execute("CREATE INDEX IF NOT EXISTS messages_conversation_idx ON messages (conversation_id, id DESC)")
             return
         except Exception:
             if attempt == attempts - 1: raise

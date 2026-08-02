@@ -11,7 +11,7 @@ async def login(username: str, password: str) -> str:
 
 async def main():
     parent, child = await asyncio.gather(login("apa", "apa1234"), login("mano", "mano1234"))
-    async with websockets.connect("ws://gateway/ws/chat", additional_headers={"Cookie": f"speaky_session={parent}"}) as parent_socket, websockets.connect("ws://gateway/ws/chat", additional_headers={"Cookie": f"speaky_session={child}"}) as child_socket:
+    async with websockets.connect("ws://gateway/ws/chat/family-default", additional_headers={"Cookie": f"speaky_session={parent}"}) as parent_socket, websockets.connect("ws://gateway/ws/chat/family-default", additional_headers={"Cookie": f"speaky_session={child}"}) as child_socket:
         await parent_socket.recv()
         await child_socket.recv()
         await parent_socket.send(json.dumps({"type": "signal"}))
