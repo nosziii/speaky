@@ -66,6 +66,8 @@ def direct(body: DirectCreate, user: dict = Depends(require_user)): return creat
 
 @app.post("/api/password")
 async def change_password(body: PasswordChange, response: Response, user: dict = Depends(require_user)):
+    if user["role"] != "parent":
+        raise HTTPException(403, "Gyermekfiók jelszavát a családi admin kezeli")
     if not verify_password(user["password_hash"], body.current_password):
         raise HTTPException(400, "A jelenlegi jelszó nem megfelelő")
     if body.current_password == body.new_password:

@@ -3,6 +3,7 @@
 import { Capacitor } from "@capacitor/core";
 import { SpeechRecognition } from "@capgo/capacitor-speech-recognition";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLanguage } from "./i18n";
 
 type SpeechResult = { isFinal: boolean; 0: { transcript: string } };
 type SpeechEvent = { resultIndex: number; results: ArrayLike<SpeechResult> };
@@ -19,6 +20,7 @@ type BrowserRecognition = {
 type SpeechConstructor = new () => BrowserRecognition;
 
 export function useSpeechInput(send: (text: string, kind: "speech") => boolean) {
+  const { text: copy } = useLanguage();
   const [listening, setListening] = useState(false);
   const [liveWords, setLiveWords] = useState("");
   const [speechError, setSpeechError] = useState("");
@@ -40,10 +42,10 @@ export function useSpeechInput(send: (text: string, kind: "speech") => boolean) 
   const startNative = useCallback(async () => {
     setSpeechError("");
     const availability = await SpeechRecognition.available();
-    if (!availability.available) throw new Error("Ezen az eszközön nincs elérhető beszédfelismerő szolgáltatás.");
+    if (!availability.available) throw new Error(copy.speech.unavailable);
     let permission = await SpeechRecognition.checkPermissions();
     if (permission.speechRecognition !== "granted") permission = await SpeechRecognition.requestPermissions();
-    if (permission.speechRecognition !== "granted") throw new Error("A beszédhez engedélyezned kell a mikrofont.");
+    if (permission.speechRecognition !== "granted") throw new Error(copy.speech.permission);
 
     await SpeechRecognition.removeAllListeners();
     nativeText.current = "";
@@ -57,20 +59,20 @@ export function useSpeechInput(send: (text: string, kind: "speech") => boolean) 
       if (event.status === "stopped" || event.state === "stopped") void finishNative();
     });
     await SpeechRecognition.addListener("error", event => {
-      setSpeechError(event.message || "Nem sikerült felismerni a beszédet.");
+      setSpeechError(event.message || copy.speech.failed);
       void finishNative();
     });
     setListening(true);
-    await SpeechRecognition.start({ language: "hu-HU", maxResults: 1, partialResults: true, popup: false });
-  }, [finishNative]);
+    await SpeechRecognition.start({ language: copy.locale, maxResults: 1, partialResults: true, popup: false });
+  }, [copy, finishNative]);
 
   const startBrowser = useCallback(() => {
     const speechWindow = window as typeof window & { SpeechRecognition?: SpeechConstructor; webkitSpeechRecognition?: SpeechConstructor };
     const Constructor = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
-    if (!Constructor) { setSpeechError("A böngésző nem támogatja a beszédfelismerést."); return; }
+    if (!Constructor) { setSpeechError(copy.speech.unsupported); return; }
     const recognition: BrowserRecognition = new Constructor();
     browserRecognition.current = recognition;
-    recognition.lang = "hu-HU";
+    recognition.lang = copy.locale;
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.onresult = event => {
@@ -83,10 +85,10 @@ export function useSpeechInput(send: (text: string, kind: "speech") => boolean) 
       if (finalText.trim()) { send(finalText, "speech"); setTimeout(() => setLiveWords(""), 900); }
     };
     recognition.onend = () => setListening(false);
-    recognition.onerror = () => { setListening(false); setSpeechError("Nem sikerült felismerni a beszédet. Próbáld újra!"); };
+    recognition.onerror = () => { setListening(false); setSpeechError(copy.speech.failed); };
     recognition.start();
     setListening(true);
-  }, [send]);
+  }, [copy, send]);
 
   const toggleSpeech = useCallback(async () => {
     setSpeechError("");
@@ -97,9 +99,9 @@ export function useSpeechInput(send: (text: string, kind: "speech") => boolean) 
     }
     if (Capacitor.isNativePlatform()) {
       try { await startNative(); }
-      catch (error) { setListening(false); setSpeechError(error instanceof Error ? error.message : "Nem sikerült elindítani a beszédfelismerést."); }
+      catch (error) { setListening(false); setSpeechError(error instanceof Error ? error.message : copy.speech.startFailed); }
     } else startBrowser();
-  }, [finishNative, listening, startBrowser, startNative]);
+  }, [copy, finishNative, listening, startBrowser, startNative]);
 
   useEffect(() => () => {
     browserRecognition.current?.stop();

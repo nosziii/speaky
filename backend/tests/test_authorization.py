@@ -4,6 +4,8 @@ from app.auth import authenticate
 from app.chats import can_access, conversation_history, create_direct, recipient_ids, save_chat_message
 from app.database import initialize
 from app.families import create_family_account, family_for_user, set_child_chat
+from fastapi.testclient import TestClient
+from app.main import app
 
 def test_family_boundaries_and_parent_permissions():
     initialize()
@@ -32,3 +34,11 @@ def test_family_boundaries_and_parent_permissions():
     family = family_for_user(parent["id"])
     assert family["is_admin"] is True
     assert len(family["members"]) == 4
+
+def test_child_cannot_change_password():
+    initialize()
+    with TestClient(app) as client:
+        login = client.post("/api/login", json={"username": "mano", "password": "mano1234"})
+        assert login.status_code == 200
+        response = client.post("/api/password", json={"current_password": "mano1234", "new_password": "uj-gyerek-jelszo"})
+        assert response.status_code == 403
